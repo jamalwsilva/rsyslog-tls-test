@@ -1,0 +1,13 @@
+FROM centos:7
+RUN yum install -y which tcpdump lsof net-tools man-db vim telnet psmisc screen
+RUN yum install -y rsyslog rsyslog-gnutls
+COPY config/server.conf /etc/rsyslog.d/
+RUN mkdir /etc/pki/tls/rsyslog
+COPY config/tls/rootCA.pem config/tls/device.key config/tls/device.crt /etc/pki/tls/rsyslog/
+RUN sed -i \
+  -e 's/^$OmitLocalLogging on/$OmitLocalLogging off/g' \
+  -e 's/^$ModLoad imjournal/#$ModLoad imjournal/g' \
+  -e 's/^$IMJournalStateFile/#$IMJournalStateFile/g' /etc/rsyslog.conf
+RUN rm -f /etc/rsyslog.d/listen.conf
+ENTRYPOINT ["/usr/sbin/rsyslogd"]
+CMD ["-dn"]
